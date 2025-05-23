@@ -2,8 +2,9 @@ from typing import Final
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import random
+import os
+TOKEN = os.getenv("TOKEN")
 
-TOKEN: Final = '8196092610:AAEE3SXDMppGV_W2KdfCL5R0qQQBdBrkU3o'  
 BOT_USERNAME: Final = '@DrawACardBot'
 
 # Статична повна колода
