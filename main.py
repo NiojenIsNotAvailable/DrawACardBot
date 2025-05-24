@@ -6,10 +6,30 @@ import os
 
 # Отримуємо токен з середовища
 TOKEN = os.getenv("TOKEN")
-
 BOT_USERNAME: Final = '@DrawACardBot'
 
-# Статична повна колода з emoji
+# Список дозволених команд
+ALLOWED_COMMANDS = {'start', 'help', 'battle', 'draw', 'end'}
+
+# Перевірка, чи це наша команда
+def is_our_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
+    text = update.message.text or ""
+    if not text.startswith('/'):
+        return False
+
+    parts = text[1:].split('@')
+    command = parts[0]
+
+    if command not in ALLOWED_COMMANDS:
+        return False
+
+    # Якщо вказано @ — перевіряємо, чи це саме наш бот
+    if len(parts) == 2 and parts[1].lower() != BOT_USERNAME[1:].lower():
+        return False
+
+    return True
+
+# Колода
 suits = {
     'Hearts': '♥️',
     'Diamonds': '♦️',
@@ -18,16 +38,17 @@ suits = {
 }
 ranks = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King']
 FULL_DECK = [f'{rank} {suits[suit]}' for suit in suits for rank in ranks] + ['Joker (Red)', 'Joker (Black)']
-
-# Поточна активна колода
 active_deck = []
 
-# /start
+# Команди
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_our_command(update, context):
+        return
     await update.message.reply_text("Мяв")
 
-# /help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_our_command(update, context):
+        return
     await update.message.reply_text(
         "Мурмявмурміумяв:\n"
         "/battle — почати бій\n"
@@ -35,15 +56,17 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "/end — завершити бій"
     )
 
-# /battle
 async def battle_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_our_command(update, context):
+        return
     global active_deck
     active_deck = FULL_DECK.copy()
     random.shuffle(active_deck)
     await update.message.reply_text("FIGHT! (Колода готова 🃏)")
 
-# /draw
 async def draw_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_our_command(update, context):
+        return
     global active_deck
 
     if not active_deck:
@@ -59,8 +82,9 @@ async def draw_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         random.shuffle(active_deck)
         await update.message.reply_text("🎉 ДЖОКЕР ХЕЛЛЙЕААХХ! +1 бенні, і +2 до всіх кидків (Колода відновлена).")
 
-# /end
 async def end_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not is_our_command(update, context):
+        return
     global active_deck
     active_deck = []
     await update.message.reply_text("Бій завершено. Колода очищена.")
@@ -74,11 +98,11 @@ if __name__ == '__main__':
     print("Starting...")
     app = Application.builder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler('start', start_command), block=False)
-    app.add_handler(CommandHandler('help', help_command), block=False)
-    app.add_handler(CommandHandler('battle', battle_command), block=False)
-    app.add_handler(CommandHandler('draw', draw_command), block=False)
-    app.add_handler(CommandHandler('end', end_command), block=False)
+    app.add_handler(CommandHandler('start', start_command))
+    app.add_handler(CommandHandler('help', help_command))
+    app.add_handler(CommandHandler('battle', battle_command))
+    app.add_handler(CommandHandler('draw', draw_command))
+    app.add_handler(CommandHandler('end', end_command))
 
     app.add_error_handler(error)
     print("Polling...")
