@@ -3,11 +3,13 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 import random
 import os
+
+# Отримуємо токен з середовища
 TOKEN = os.getenv("TOKEN")
 
 BOT_USERNAME: Final = '@DrawACardBot'
 
-# Статична повна колода
+# Статична повна колода з emoji
 suits = {
     'Hearts': '♥️',
     'Diamonds': '♦️',
@@ -17,7 +19,7 @@ suits = {
 ranks = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King']
 FULL_DECK = [f'{rank} {suits[suit]}' for suit in suits for rank in ranks] + ['Joker (Red)', 'Joker (Black)']
 
-# Змінна активної колоди
+# Поточна активна колода
 active_deck = []
 
 # /start
@@ -26,7 +28,12 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 # /help
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Мурмявмурміумяв:\n/battle — почати бій\n/draw — витягнути карту\n/end — завершити бій")
+    await update.message.reply_text(
+        "Мурмявмурміумяв:\n"
+        "/battle — почати бій\n"
+        "/draw — витягнути карту\n"
+        "/end — завершити бій"
+    )
 
 # /battle
 async def battle_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -44,7 +51,7 @@ async def draw_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     drawn_card = active_deck.pop()
-    user_name = update.message.from_user.username
+    user_name = update.message.from_user.username or "Гравець"
     await update.message.reply_text(f'@{user_name} витягує карту: {drawn_card}')
 
     if 'Joker' in drawn_card:
@@ -58,20 +65,20 @@ async def end_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     active_deck = []
     await update.message.reply_text("Бій завершено. Колода очищена.")
 
-# Error handler
+# Обробка помилок
 async def error(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f'Update {update} caused error {context.error}') 
 
-# main
+# Запуск
 if __name__ == '__main__':
     print("Starting...")
     app = Application.builder().token(TOKEN).build()
 
-    app.add_handler(CommandHandler('start', start_command))
-    app.add_handler(CommandHandler('help', help_command))
-    app.add_handler(CommandHandler('battle', battle_command))
-    app.add_handler(CommandHandler('draw', draw_command))
-    app.add_handler(CommandHandler('end', end_command))
+    app.add_handler(CommandHandler('start', start_command), block=False)
+    app.add_handler(CommandHandler('help', help_command), block=False)
+    app.add_handler(CommandHandler('battle', battle_command), block=False)
+    app.add_handler(CommandHandler('draw', draw_command), block=False)
+    app.add_handler(CommandHandler('end', end_command), block=False)
 
     app.add_error_handler(error)
     print("Polling...")
